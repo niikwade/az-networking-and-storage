@@ -77,6 +77,24 @@ Deployed storage account screenshot below.
 
 <img width="1498" height="811" alt="Screenshot 2025-11-16 105500" src="https://github.com/user-attachments/assets/494eac8e-bf02-4761-a052-672b386db106" />
 
+4. Create a Private Endpoint with DNS integration
+
+<img width="1067" height="858" alt="Screenshot 2025-11-16 110104" src="https://github.com/user-attachments/assets/c4cd2f56-45c5-41f4-841b-1df5fcf44439" />
+
+I used 'Microsoft.Storage/storageAccounts' because I am implementing a private endpoint for a Storage Account. DNS integration during setup, ensures private name resolution without public DNS exposure
+
+<img width="1505" height="802" alt="Screenshot 2025-11-16 202436" src="https://github.com/user-attachments/assets/04dda7d0-eaeb-485d-afc7-d0b02cae3716" />
+
+Screenshot of successfully deployed private endpoint.
+
+5. Enable Advanced Encryption & Security Features
++ I created a key vault
++ Then created managed identity to access the storage account with customer-managed key (CMK) instead of Microsoft managed key. Used customer-managed keys to maintain control over encryption keys and enabled advanced threat protection for suspicious activity monitoring.
++ Successfully encrypted the storage account.
+
+<img width="576" height="117" alt="Screenshot 2025-11-16 215716" src="https://github.com/user-attachments/assets/09449dc1-0e0a-403a-9e28-80a3e1c4811a" />
+
+
 
 
 
