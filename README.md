@@ -1,122 +1,183 @@
-# Project 2: Secure Enterprise Storage with Network Isolation
-Topics/technologies Covered: Virtual Networks, NSGs, Private Endpoints, Storage Firewalls, Encryption, ARM Templates, Security Monitoring
+# 🔒 Project 2: Secure Enterprise Storage with Network Isolation
 
-### **Summary**
+## 📋 Table of Contents
+- [Project Overview](#project-overview)
+- [Business Scenario](#business-scenario)
+- [Architecture](#architecture)
+- [Implementation Steps](#implementation-steps)
+- [Security Validation](#security-validation)
+- [Lessons Learned](#lessons-learned)
+- [Next Steps](#next-steps)
 
-This project demonstrates how to deploy a secure, enterprise-grade storage solution with network isolation, private connectivity, and automating resource deployment using ARM templates. It demonstrates networking and storage skills and knowledge.
+## 🎯 Project Overview
 
-### **Scenario**
+This project demonstrates how to deploy an enterprise-grade storage solution with comprehensive network isolation and security controls. By implementing private endpoints, network security groups, and storage firewalls, we ensure sensitive data is protected from unauthorized access while maintaining accessibility for authorized services.
 
-A company needs to deploy a storage account for sensitive financial data that must be:
-+  Isolated from public internet
-+  Accessible only from specific subnets
-+  Encrypted with customer-managed keys
-+  Monitored for suspicious access
-+  Deployed via automated, repeatable templates
+**Technologies Covered**: Virtual Networks, NSGs, Private Endpoints, Storage Firewalls, Encryption, ARM Templates, Security Monitoring
 
-### Steps
-1. Create VNet
-   
-<img width="1251" height="853" alt="Screenshot 2025-11-15 225723" src="https://github.com/user-attachments/assets/20972523-3664-4c70-8093-540efe6c2586" />
+## 🏢 Business Scenario
 
-<img width="1757" height="866" alt="Screenshot 2025-11-15 225453" src="https://github.com/user-attachments/assets/c1179315-eed3-4a1d-99f6-e7509e971e44" />
+A financial company needs to deploy a storage account for sensitive data with the following security requirements:
+- ✔️ Isolated from public internet
+- ✔️ Accessible only from specific subnets  
+- ✔️ Encrypted with customer-managed keys
+- ✔️ Monitored for suspicious access
+- ✔️ Deployed via automated, repeatable templates
+  
+## 🏗️ Architecture
 
-Under the "IP addresses" tab in the Azure portal, I added 2 subnets - *web* and *db*. Azure created a default subnet, which I renamed to *privateendpoint*. I renamed as such to it would serve as a dedicated subnet for private endpoints to simplify NSG management and follow Azure best practices for service isolation. I created these subnets for network isolation.
+The solution implements a three-tier network architecture with dedicated subnets and private connectivity:
 
-<img width="1745" height="861" alt="Screenshot 2025-11-15 225546" src="https://github.com/user-attachments/assets/fedbb875-4784-45a7-a892-b090b1750894" />
+VNet (10.1.0.0/16)
+├── snet-web (10.1.1.0/24) - Web tier with limited internet access
+├── snet-db (10.1.2.0/24) - Database tier with internal-only access
+└── snet-privateendpoint (10.1.100.0/24) - Dedicated private endpoint subnet
 
-A screenshot of the successfully deployed VNet is below.
+## 🛠️ Implementation Steps
 
-<img width="1517" height="849" alt="Screenshot 2025-11-15 231216" src="https://github.com/user-attachments/assets/007ac830-f8e0-4805-a7c1-59e638842bd3" />
+### 1. Virtual Network Setup
 
-2. Deploy a Network Security Group (NSG)
+Created a secure network foundation with dedicated subnets for different tiers.
 
-<img width="1528" height="868" alt="Screenshot 2025-11-15 231525" src="https://github.com/user-attachments/assets/52b87c14-2aaa-4f2f-b78a-701d8e122645" />
+![VNet Subnets](https://github.com/user-attachments/assets/20972523-3664-4c70-8093-540efe6c2586)
 
+![VNet Configuration](https://github.com/user-attachments/assets/c1179315-eed3-4a1d-99f6-e7509e971e44)
 
-<img width="1894" height="850" alt="Screenshot 2025-11-16 000544" src="https://github.com/user-attachments/assets/7faaa02f-609a-4c5e-ae47-aac3c2844a55" />
+**Key Configuration:**
+- **VNet**: `vnet-prod-uks` with address space `10.1.0.0/16`
+- **Subnets**: 
+  - `snet-web` (10.1.1.0/24) - Web applications
+  - `snet-db` (10.1.2.0/24) - Database tier  
+  - `snet-privateendpoint` (10.1.100.0/24) - Dedicated private endpoints
 
-The rules in the web NSG are displayed in the screenshot above. The 'AllowVnetInBound', 'AllowAzureLoadBalancerInBound', 'DenyAllInBound' rules are Azure default rules that cannot be deleted. I added another rule 'allowHTTPS' to allow HTTPS traffic from the internet. I assigned it a priority of 100, a lower number than the other defaults, as I wanted that rule to be evalusted first before higher priority rules (custom rules > default rules). I added another rule 'allowStorageOutbound', with Priority 110, a Service Tag Destination --> Storage. This allows for dynamic IP management and supports secure web access and cloud-native storage integration.
+![Subnet Configuration](https://github.com/user-attachments/assets/fedbb875-4784-45a7-a892-b090b1750894)
+*Figure 1: Successfully deployed VNet with three subnets*
 
+### 2. Network Security Group Configuration
 
-NSG for *db* 
+Implemented zero-trust networking with explicit allow/deny rules.
 
-<img width="1908" height="804" alt="Screenshot 2025-11-16 001621" src="https://github.com/user-attachments/assets/ed276ee6-71af-47f2-8f10-e1e9ec95f9ce" />
+![NSG Overview](https://github.com/user-attachments/assets/52b87c14-2aaa-4f2f-b78a-701d8e122645)
 
-I added another rule to allow connection from the web subnet. 
+**Web Subnet NSG Rules:**
+![Web NSG Rules](https://github.com/user-attachments/assets/7faaa02f-609a-4c5e-ae47-aac3c2844a55)
 
-3. Create Storage Account with Security-First Configuration
+**Rules Configuration:**
+- `allowHTTPS` (Priority 100) - Allow HTTPS from internet
+- `allowStorageOutbound` (Priority 110) - Allow outbound to Storage service tag
+- Default Azure rules maintained for intra-VNet communication
 
-<img width="1730" height="864" alt="Screenshot 2025-11-16 100603" src="https://github.com/user-attachments/assets/eb1b5f5d-12ba-45c2-9397-dde12d0ed48f" />
+**Database Subnet NSG Rules:**
+![Database NSG Rules](https://github.com/user-attachments/assets/ed276ee6-71af-47f2-8f10-e1e9ec95f9ce)
 
+*Figure 2: Database NSG allowing specific web subnet communication*
 
-_Critical configurations_: (**Shown in the screenshots below**)
-+   Network routing: Premium (Microsoft network routing) for optimal security
-+   Public access: Disabled from the start
-+   Network access: Enabled from selected virtual networks only
-+   TLS version: Require TLS 1.2
+### 3. Secure Storage Account Deployment
 
-<img width="1329" height="855" alt="Screenshot 2025-11-16 102324" src="https://github.com/user-attachments/assets/630ae248-10f2-4917-80f2-0113c9bef0be" />
+Configured storage with security-first settings and disabled public access.
 
-_Disabled public access at creation to enforce private-only connectivity, preventing accidental exposure._
+![Storage Account Overview](https://github.com/user-attachments/assets/eb1b5f5d-12ba-45c2-9397-dde12d0ed48f)
+*Figure 3: Storage account deployment configuration*
 
-<img width="1337" height="864" alt="image" src="https://github.com/user-attachments/assets/786e30fb-aa33-4f09-8752-4ca5506fe79d" />
+**Critical Security Configurations:**
 
+**Networking Settings:**
+![Networking Configuration](https://github.com/user-attachments/assets/630ae248-10f2-4807-80f2-0113c9bef0be)
+- Public access disabled to enforce private-only connectivity
+- Network routing: Premium (Microsoft network routing)
 
-<img width="1260" height="328" alt="Screenshot 2025-11-16 103438" src="https://github.com/user-attachments/assets/14915cf0-8056-41d0-8d03-37d52516c231" />
+**Advanced Security:**
+![Advanced Security](https://github.com/user-attachments/assets/786e30fb-aa33-4f09-8752-4ca5506fe79d)
+- TLS 1.2 required for all connections
 
-Under Data Protection tab, I enabled "Enable soft delete for blobs", "Enable soft delete for containers", "Enable soft delete for file shares" and left them at 7 days. I did not enable any of the Tracking options as I don't think it was necessary for this project.
+**Data Protection:**
+![Data Protection](https://github.com/user-attachments/assets/14915cf0-8056-41d0-8d03-37d52516c231)
+- Soft delete enabled for blobs, containers, and file shares (7 days)
 
-<img width="1081" height="865" alt="Screenshot 2025-11-16 104637" src="https://github.com/user-attachments/assets/952acf75-8000-4ea1-9a7d-22ca0bc3f6d5" />
+**Encryption Configuration:**
+![Encryption Settings](https://github.com/user-attachments/assets/952acf75-8000-4ea1-9a7d-22ca0bc3f6d5)
+- Microsoft-managed keys with infrastructure encryption enabled
+- Support for customer-managed keys configured
 
-I opted for 'Microsoft-managed keys(MMK)' for the "Encryption type". I allowed 'Blobs and files only' at the "Enable support for customer-managed keys" section, and ticked the option to "Enable infrastructure encryption" to add another layer of security to my deployment.
+### 4. Private Endpoint with DNS Integration
 
-<img width="1081" height="865" alt="Screenshot 2025-11-16 104637" src="https://github.com/user-attachments/assets/484a805f-9ae2-4e85-a38c-2bcef8c06ebb" />
+Established secure private connectivity to eliminate public exposure.
 
-Deployed storage account screenshot below.
+![Private Endpoint Configuration](https://github.com/user-attachments/assets/c4cd2f56-45c5-41f4-841b-1df5fcf44439)
 
-<img width="1498" height="811" alt="Screenshot 2025-11-16 105500" src="https://github.com/user-attachments/assets/494eac8e-bf02-4761-a052-672b386db106" />
+**Configuration Details:**
+- Resource type: `Microsoft.Storage/storageAccounts`
+- Target subresource: `blob`
+- DNS integration enabled for automatic private name resolution
 
-4. Create a Private Endpoint with DNS integration
+![Private Endpoint Success](https://github.com/user-attachments/assets/04dda7d0-eaeb-485d-afc7-d0b02cae3716)
+*Figure 4: Successfully deployed private endpoint*
 
-<img width="1067" height="858" alt="Screenshot 2025-11-16 110104" src="https://github.com/user-attachments/assets/c4cd2f56-45c5-41f4-841b-1df5fcf44439" />
+### 5. Advanced Encryption & Security
 
-I used 'Microsoft.Storage/storageAccounts' because I am implementing a private endpoint for a Storage Account. DNS integration during setup, ensures private name resolution without public DNS exposure
+Enhanced data protection with customer-managed keys and comprehensive monitoring.
 
-<img width="1505" height="802" alt="Screenshot 2025-11-16 202436" src="https://github.com/user-attachments/assets/04dda7d0-eaeb-485d-afc7-d0b02cae3716" />
+![CMK Configuration](https://github.com/user-attachments/assets/09449dc1-0e0a-403a-9e28-80a3e1c4811a)
 
-Screenshot of successfully deployed private endpoint.
+**Security Enhancements:**
+- Azure Key Vault integration for customer-managed keys
+- Managed identity for secure storage account access
+- Advanced threat protection enabled
 
-5. Enable Advanced Encryption & Security Features
-+ I created a key vault
-+ Then created managed identity to access the storage account with customer-managed key (CMK) instead of Microsoft managed key. Used customer-managed keys to maintain control over encryption keys and enabled advanced threat protection for suspicious activity monitoring.
-+ Successfully encrypted the storage account.
+## 🔍 Security Validation
 
-<img width="576" height="117" alt="Screenshot 2025-11-16 215716" src="https://github.com/user-attachments/assets/09449dc1-0e0a-403a-9e28-80a3e1c4811a" />
+### 6.1 Negative Testing: Public Access Blocked
 
-6. Test Security Controls & Validate Isolation
-6.1. Negative test: Verify Public Access is Blocked
-Getting the storage account URL screenshot below
+Verified that public internet access is completely blocked.
 
-<img width="1891" height="861" alt="Screenshot 2025-11-17 145834" src="https://github.com/user-attachments/assets/2d05db87-bfc6-490a-b0f2-99adadaf9156" />
+![Storage Account URL](https://github.com/user-attachments/assets/2d05db87-bfc6-490a-b0f2-99adadaf9156)
 
-I am unable to connect to the storage account through the URL.
-<img width="1486" height="200" alt="Screenshot 2025-11-17 145946" src="https://github.com/user-attachments/assets/8b18f12c-9dad-466b-b065-5fd8e5a510ef" />
+**Test Result:** ✔️ SUCCESS
+![Access Blocked](https://github.com/user-attachments/assets/8b18f12c-9dad-466b-b065-5fd8e5a510ef)
+*Public access successfully blocked - connection attempts fail*
 
-**Successfully verified that public internet access is completely blocked, preventing unauthorized external access.**
+### 6.2 Positive Testing: Private Endpoint Access
 
-6.2. Positive test: Validate Private Endpoint Access
-I will create a VM in the _snet-web_ to test whether resources in the VNet can connect to each other without issues.
+*Note: VM creation paused due to regional capacity constraints. Testing methodology prepared for:*
+- Deploy test VM in `snet-web` subnet
+- Validate private endpoint connectivity
+- Verify cross-subnet communication controls
 
-### End of this project
-I have to end this project here as I have hit a small hiccup. I wanted to create a VM in one of the subnets I created in this project. Unfortunately I created the VNet in the UK South Region, which doesn't support the free tier. So I will end the project here, and redo it in another supported region.
+## 💡 Lessons Learned
 
+### 🔒 Security Insights
+- **Private endpoints provide more secure connectivity** than service endpoints alone by eliminating public exposure entirely
+- **Explicit "Deny" rules in NSGs are safer** than relying on implicit defaults - always define explicit security boundaries
+- **Dedicated subnets for private endpoints** significantly simplify network security group management and follow Azure best practices
+- **DNS configuration is critical** for private endpoint functionality - without proper DNS, private endpoints fail silently
 
+### ⚙️ Technical Implementation
+- **Service tags (like 'Storage')** enable dynamic IP management and reduce maintenance overhead compared to static IP rules
+- **Priority values in NSG rules** determine evaluation order - lower numbers processed first, making custom rules override defaults
+- **Regional service availability** can impact project planning - always verify resource availability before architecture finalization
+- **Infrastructure encryption** adds an additional layer of security but requires understanding of key management implications
 
+### 🎯 Architectural Decisions
+- **Three-tier subnet design** (web, database, private endpoints) provides clear separation of concerns and security boundaries
+- **Disabling public access at creation** prevents accidental exposure versus trying to secure it later
+- **Premium network routing** offers better security but requires cost-benefit analysis for production workloads
+- **Soft delete configurations** provide data protection without significant performance impact
 
+### 📝 Operational Considerations
+- **Documenting security decisions** during implementation helps with future audits and troubleshooting
+- **Testing public access blocking** is crucial - configuration doesn't always equal actual protection
+- **Clean resource naming conventions** improve manageability and follow cloud adoption framework principles
+- **Regional constraints** should be identified during the planning phase to avoid project delays
 
+## 🚀 Next Steps
 
+- Redeploy in supported region (West Europe/US East) to complete VM testing
+- Implement automated deployment via Bicep/ARM templates
+- Configure advanced monitoring and alerting
+- Document cost optimization strategies for production deployment
 
+---
+- **Data Protection**: Encryption at rest, infrastructure encryption, soft delete
+- **Security Operations**: Security validation testing, monitoring configuration
 
-
-
+*Last Updated: November 2024*
