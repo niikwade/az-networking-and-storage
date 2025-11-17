@@ -94,6 +94,24 @@ Screenshot of successfully deployed private endpoint.
 
 <img width="576" height="117" alt="Screenshot 2025-11-16 215716" src="https://github.com/user-attachments/assets/09449dc1-0e0a-403a-9e28-80a3e1c4811a" />
 
+6. Test Security Controls & Validate Isolation
+6.1. Negative test: Verify Public Access is Blocked
+Getting the storage account URL screenshot below
+
+<img width="1891" height="861" alt="Screenshot 2025-11-17 145834" src="https://github.com/user-attachments/assets/2d05db87-bfc6-490a-b0f2-99adadaf9156" />
+
+I am unable to connect to the storage account through the URL.
+<img width="1486" height="200" alt="Screenshot 2025-11-17 145946" src="https://github.com/user-attachments/assets/8b18f12c-9dad-466b-b065-5fd8e5a510ef" />
+
+**Successfully verified that public internet access is completely blocked, preventing unauthorized external access.**
+
+6.2. Positive test: Validate Private Endpoint Access
+I will create a VM in the _snet-web_ to test whether resources in the VNet can connect to each other without issues.
+
+### End of this project
+I have to end this project here as I have hit a small hiccup. I wanted to create a VM in one of the subnets I created in this project. Unfortunately I created the VNet in the UK South Region, which doesn't support the free tier. So I will end the project here, and redo it in another supported region.
+
+
 
 
 
