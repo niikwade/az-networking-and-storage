@@ -126,19 +126,21 @@ Enhanced data protection with customer-managed keys and comprehensive monitoring
 
 ## 🔍 Security Validation
 
-### 6.1 Negative Testing: Public Access Blocked
+### 6.1 Negative Testing: erify Public Access is Blocked
 
-Verified that public internet access is completely blocked.
+Attempted to access the storage account via public URL in a browswer. Access was denied.
 
 ![Storage Account URL](https://github.com/user-attachments/assets/2d05db87-bfc6-490a-b0f2-99adadaf9156)
 
 **Test Result:** ✔️ SUCCESS
 ![Access Blocked](https://github.com/user-attachments/assets/8b18f12c-9dad-466b-b065-5fd8e5a510ef)
-*Public access successfully blocked - connection attempts fail*
+*Public access successfully blocked*
 
 ### 6.2 Positive Testing: Private Endpoint Access
 
-*Note: VM creation paused due to regional capacity constraints. Testing methodology prepared for:*
+*Planned to create a VM in the web subnet to test internal connectivity. However, VM deployment was blocked due to region restrictions (UK South not supported in free tier).*
+
+*Note: Testing methodology prepared for:*
 - Deploy test VM in `snet-web` subnet
 - Validate private endpoint connectivity
 - Verify cross-subnet communication controls
@@ -147,14 +149,14 @@ Verified that public internet access is completely blocked.
 
 ### 🔒 Security Insights
 - **Private endpoints provide more secure connectivity** than service endpoints alone by eliminating public exposure entirely
-- **Explicit "Deny" rules in NSGs are safer** than relying on implicit defaults - always define explicit security boundaries
+- **Explicit "Deny" rules in NSGs are safer** than relying on implicit defaults but one must always define explicit security boundaries
 - **Dedicated subnets for private endpoints** significantly simplify network security group management and follow Azure best practices
-- **DNS configuration is critical** for private endpoint functionality - without proper DNS, private endpoints fail silently
+- **DNS configuration is critical** for private endpoint functionality. Without proper DNS, private endpoints fail
 
 ### ⚙️ Technical Implementation
 - **Service tags (like 'Storage')** enable dynamic IP management and reduce maintenance overhead compared to static IP rules
-- **Priority values in NSG rules** determine evaluation order - lower numbers processed first, making custom rules override defaults
-- **Regional service availability** can impact project planning - always verify resource availability before architecture finalization
+- **Priority values in NSG rules** determine evaluation order (lower numbers processed first, making custom rules override defaults)
+- **Regional service availability** can impact project planning ( always verify resource availability before architecture finalization)
 - **Infrastructure encryption** adds an additional layer of security but requires understanding of key management implications
 
 ### 🎯 Architectural Decisions
@@ -165,19 +167,12 @@ Verified that public internet access is completely blocked.
 
 ### 📝 Operational Considerations
 - **Documenting security decisions** during implementation helps with future audits and troubleshooting
-- **Testing public access blocking** is crucial - configuration doesn't always equal actual protection
+- **Testing public access blocking** is crucial as configuration doesn't always equal actual protection
 - **Clean resource naming conventions** improve manageability and follow cloud adoption framework principles
 - **Regional constraints** should be identified during the planning phase to avoid project delays
 
-## 🚀 Next Steps
-
-- Redeploy in supported region (West Europe/US East) to complete VM testing
-- Implement automated deployment via Bicep/ARM templates
-- Configure advanced monitoring and alerting
-- Document cost optimization strategies for production deployment
-
+## End of Project 
+This project has been paused due to a region limitation in the free tier. I create the VNet  in UK South, which does not support VM deployment under my current plan. I will recreate the environment in a supported region to complete the connectivity test.
 ---
-- **Data Protection**: Encryption at rest, infrastructure encryption, soft delete
-- **Security Operations**: Security validation testing, monitoring configuration
 
 *Last Updated: November 2024*
